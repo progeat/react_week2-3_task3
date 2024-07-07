@@ -1,123 +1,151 @@
 import { useState } from 'react';
-import data from './data.json';
+import { DATA } from './constants';
 import styles from './App.module.css';
 
 export const App = () => {
 	const [operand1, setOperand1] = useState('');
 	const [operator, setOperator] = useState('');
 	const [operand2, setOperand2] = useState('');
-	const [total, setTotal] = useState('0'); // поменять на display или output
-	const [isResult, setResult] = useState(false); // поменять на total
-
-	console.log(operand1, operator, operand2); // удалить
+	const [total, setTotal] = useState('0');
+	const [isResult, setIsResult] = useState(false);
 
 	const onClickButton = ({ target }) => {
-		// разбить на два обработчика цифр и операторов
 		const value = target.dataset.value;
 
-		// если нажали на цифру
-		if (Number(value)) {
-			if (operator === '') {
-				setOperand1(operand1 + value);
-				setTotal(operand1 + value);
-			} else {
-				setOperand2(operand2 + value);
-				setTotal(`${operand1} ${operator} ${operand2 + value}`);
-			}
-			// если нажали на оператор + или -
-		} else if (value === '+' || value === '-') {
-			// если было нажато равно
-			if (isResult) {
-				// меняем оператора если первый операнд отрицательное число
-				if (operand1 < 0 && value === '+') {
-					setTotal(`${operand1} - ${Math.abs(operand1)}`);
-					setOperand2(Math.abs(operand1));
-					setOperator('-');
-				} else if (operand1 < 0 && value === '-') {
-					setTotal(`${operand1} + ${Math.abs(operand1)}`);
-					setOperand2(Math.abs(operand1));
-					setOperator('+');
+		switch (!isNaN(Number(value)) || value) {
+			case true:
+				if (operator === '') {
+					if (value === '0' && operand1 === '0') return;
+					setOperand1((operand1 === '0' ? '' : operand1) + value);
+					setTotal(`${(operand1 === '0' ? '' : operand1) + value}`);
 				} else {
-					// если нажали равно повторно
-					setTotal(`${operand1} ${value} ${operand1}`);
-					setOperand2(operand1);
-					setOperator(value);
+					if (value === '0' && operand2 === '0') return;
+					if (isResult) {
+						setOperand2(value);
+						setTotal(`${operand1} ${operator} ${value}`);
+						setIsResult(false);
+					} else {
+						setOperand2((operand2 === '0' ? '' : operand2) + value);
+						setTotal(
+							`${operand1} ${operator} ${(operand2 === '0' ? '' : operand2) + value}`,
+						);
+					}
 				}
-			} else {
-				// условие чтобы присвоить первому операнду отрицательное значение
-				if (value === '+' && operand1 === '') return;
-				if (value === '-' && operand1 === '' && operand1 !== '-') {
-					setOperand1('-');
-					setTotal(`-`);
+				break;
+
+			case '+':
+				if (operand1 === '') return;
+
+				// если было нажато равно повторно
+				if (isResult) {
+					// меняем оператора если первый операнд отрицательное число
+					if (operand1 < 0) {
+						setTotal(`${operand1} - ${Math.abs(operand1)}`);
+						setOperand2(`${Math.abs(operand1)}`);
+						setOperator('-');
+					} else {
+						setTotal(`${operand1} ${value} ${operand1}`);
+						setOperand2(operand1);
+						setOperator(value);
+					}
 				} else {
-					// просто добавляем оператора
+					// добавляем оператора
 					setTotal(`${operand1} ${value} ${operand2}`);
 					setOperator(value);
 				}
-			}
-			// если нажали равно
-		} else if (operand2 !== '' && value === '=') {
-			// выбираем операцию сложения или вычитания в зависимости от оператора
-			switch (operator) {
-				case '+':
+				break;
+
+			case '-':
+				// если было нажато равно повторно
+				if (isResult) {
+					// меняем оператора если первый операнд отрицательное число
+					if (operand1 < 0) {
+						setTotal(`${operand1} + ${Math.abs(operand1)}`);
+						setOperand2(`${Math.abs(operand1)}`);
+						setOperator('+');
+					} else {
+						setTotal(`${operand1} ${value} ${operand1}`);
+						setOperand2(operand1);
+						setOperator(value);
+					}
+				} else if (operand1 === '' && operand1 !== '-') {
+					setOperand1('-');
+					setTotal(`-`);
+				} else if (operand1 !== '-') {
+					// добавляем оператора
+					setTotal(`${operand1} ${value} ${operand2}`);
+					setOperator(value);
+				}
+				break;
+
+			case '=':
+				if (operand2 === '') return;
+				// выбираем операцию сложения или вычитания в зависимости от оператора
+				if (operator === '+') {
 					setTotal(`${Number(operand1) + Number(operand2)}`);
 					setOperand1(`${Number(operand1) + Number(operand2)}`);
-					setResult(true);
-					break;
-				case '-':
+					setIsResult(true);
+				} else {
 					setTotal(`${Number(operand1) - Number(operand2)}`);
 					setOperand1(`${Number(operand1) - Number(operand2)}`);
-					setResult(true);
-					break;
-				default:
-					break;
-			}
-			// делаем сброс если нажали кнопку сброса
-		} else if (value === 'C') {
-			setOperand1('');
-			setOperator('');
-			setOperand2('');
-			setTotal('0');
-			setResult(false);
+					setIsResult(true);
+				}
+				break;
+
+			case 'C':
+				setOperand1('');
+				setOperator('');
+				setOperand2('');
+				setTotal('0');
+				setIsResult(false);
+				break;
+
+			default:
+				break;
 		}
 	};
 
 	return (
 		<div className={styles.app}>
-			<div className={styles.display}>
-				{/* {operand1 !== '' ? `${operand1} ${operator} ${operand2}` : '0'} */}
+			<div
+				className={
+					styles.display +
+					' ' +
+					(isResult && !isNaN(Number(total)) ? styles['display--total'] : '')
+				}
+			>
 				{total}
 			</div>
-			<ul className={styles.list}>
-				{data.map((item) => (
+			<ul className={styles.list} onClick={onClickButton}>
+				{DATA.map((item) => (
 					<li
 						className={
 							styles.item +
 							' ' +
-							(item.type === 'zero'
+							(item === '0'
 								? styles['item--zero']
-								: item.type === 'enter'
+								: item === '='
 									? styles['item--enter']
 									: '')
 						}
-						key={item.value}
+						key={item}
 					>
 						<button
 							className={
 								styles.button +
 								' ' +
-								(item.type === 'operator'
+								(item === '-' || item === '+'
 									? styles['button--operator']
-									: item.type === 'reset'
+									: item === 'C'
 										? styles['button--reset']
-										: item.type === 'enter'
+										: item === '='
 											? styles['button--enter']
 											: '')
 							}
-							data-value={item.value}
-							onClick={onClickButton}
+							data-value={item}
 						>
-							{item.value}
+							{/* если минус, ставим тире подлинее для дизайна*/}
+							{item === '-' ? '–' : item}
 						</button>
 					</li>
 				))}

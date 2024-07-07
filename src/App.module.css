@@ -20,6 +20,10 @@
 	text-align: end;
 }
 
+.display--total {
+	color: #26c0a4;
+}
+
 .list {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
@@ -58,7 +62,6 @@
 }
 
 .button:hover {
-	/* color: darkturquoise; */
 	color: #00e5ff;
 }
 
